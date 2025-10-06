@@ -1,0 +1,22 @@
+{
+    "level": 1,
+    "xp": 0,
+    "xp_to_next": 100,
+    "total_points": 0,
+    "streak_days": 0,
+    "steps_today": 0,
+    "steps_goal": 5000,
+    "exercise_minutes": 0,
+    "exercise_goal": 20,
+    "badges": [],
+    "daily_goals_completed": 0,
+    "weekly_challenges": {
+        "steps_challenge": {"target": 5, "current": 0, "reward": 100},
+        "exercise_challenge": {"target": 5, "current": 0, "reward": 75}
+    },
+    "history": {
+        "steps": [],
+        "exercise": [],
+        "dates": []
+    }
+}

@@ -2,6 +2,8 @@
 
 import http.server
 import socketserver
+import json
+import os
 
 class AppHandler(http.server.SimpleHTTPRequestHandler):
     def do_GET(self):
@@ -21,89 +23,7 @@ class AppHandler(http.server.SimpleHTTPRequestHandler):
     <title>Smart Walking App</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta charset="UTF-8">
-    <style>
-        body { 
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
-            margin: 0; 
-            padding: 0; 
-            background: #f0f0f0; 
-            font-size: 16px;
-        }
-        .header { 
-            background: #007AFF; 
-            color: white; 
-            padding: 20px; 
-            text-align: center; 
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        .header h1 {
-            margin: 0;
-            font-size: 24px;
-            font-weight: 600;
-        }
-        .tabs { 
-            display: flex; 
-            background: white;
-            border-bottom: 1px solid #e0e0e0;
-        }
-        .tab { 
-            flex: 1;
-            padding: 15px; 
-            background: white; 
-            border: none; 
-            cursor: pointer; 
-            font-size: 16px;
-            color: #666;
-            border-bottom: 3px solid transparent;
-        }
-        .tab.active { 
-            color: #007AFF; 
-            border-bottom-color: #007AFF;
-        }
-        .content { 
-            background: white; 
-            padding: 20px; 
-            min-height: calc(100vh - 140px);
-        }
-        .metric {
-            background: #f8f9fa;
-            padding: 15px;
-            margin: 10px 0;
-            border-radius: 8px;
-            border-left: 4px solid #007AFF;
-        }
-        .metric-label {
-            font-size: 14px;
-            color: #666;
-            margin-bottom: 5px;
-        }
-        .metric-value {
-            font-size: 20px;
-            font-weight: 600;
-            color: #333;
-        }
-        .button { 
-            background: #007AFF; 
-            color: white; 
-            border: none; 
-            padding: 15px 30px; 
-            border-radius: 8px; 
-            cursor: pointer; 
-            font-size: 16px;
-            width: 100%;
-            margin: 10px 0;
-        }
-        .button:active {
-            background: #0056CC;
-        }
-        .hidden { display: none; }
-        .section-title {
-            font-size: 18px;
-            font-weight: 600;
-            margin: 20px 0 10px 0;
-            color: #333;
-        }
-    </style>
+    <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
     <div class="header">
@@ -112,95 +32,208 @@ class AppHandler(http.server.SimpleHTTPRequestHandler):
     
     <div class="tabs">
         <button class="tab active" onclick="showTab('home')">Home</button>
-        <button class="tab" onclick="showTab('analytics')">Analytics</button>
         <button class="tab" onclick="showTab('exercise')">Exercise</button>
+        <button class="tab" onclick="showTab('goals')">Goals</button>
+        <button class="tab" onclick="showTab('progress')">Progress</button>
     </div>
     
     <div class="content">
         <div id="home" class="tab-content">
-            <div class="section-title">Dashboard</div>
+            <div class="section-title">Today's Overview</div>
             
-            <div class="metric">
-                <div class="metric-label">Health Score</div>
-                <div class="metric-value">85/100</div>
+            <div class="metric-card">
+                <div class="metric-header">
+                    <div class="metric-label">Steps Today</div>
+                    <div class="metric-value" id="steps-value">0</div>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: 0%"></div>
+                </div>
+                <div class="metric-subtitle">Goal: 5,000 steps</div>
             </div>
             
-            <div class="metric">
-                <div class="metric-label">Steps Today</div>
-                <div class="metric-value">2,847</div>
+            <div class="metric-card">
+                <div class="metric-header">
+                    <div class="metric-label">Exercise Minutes</div>
+                    <div class="metric-value" id="exercise-value">0</div>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: 0%"></div>
+                </div>
+                <div class="metric-subtitle">Goal: 20 minutes</div>
             </div>
             
-            <div class="metric">
-                <div class="metric-label">Heart Rate</div>
-                <div class="metric-value">72 bpm</div>
+            <div class="streak-card">
+                <div class="streak-number" id="streak-days">0</div>
+                <div class="streak-label">Day Streak</div>
             </div>
             
-            <div class="metric">
-                <div class="metric-label">Sleep</div>
-                <div class="metric-value">7h 24m</div>
+            <div class="level-card">
+                <div class="level-number" id="level">1</div>
+                <div class="level-label">Level</div>
+                <div class="xp-bar">
+                    <div class="xp-fill" style="width: 0%"></div>
+                </div>
+                <div style="font-size: 12px; margin-top: 5px;">0/100 XP</div>
             </div>
             
-            <button class="button" onclick="alert('Route started!')">Start Walking Route</button>
-        </div>
-        
-        <div id="analytics" class="tab-content hidden">
-            <div class="section-title">Gait Analytics</div>
+            <button class="button" onclick="startWalking()">Start Walking Session</button>
+            <button class="button" onclick="resetDay()" style="background: #dc3545;">Reset Day</button>
             
-            <div class="metric">
-                <div class="metric-label">Patient</div>
-                <div class="metric-value">John Doe</div>
-            </div>
-            
-            <div class="metric">
-                <div class="metric-label">Stride Length</div>
-                <div class="metric-value">68.2 cm</div>
-            </div>
-            
-            <div class="metric">
-                <div class="metric-label">Cadence</div>
-                <div class="metric-value">119.5 spm</div>
-            </div>
-            
-            <div class="metric">
-                <div class="metric-label">Balance Score</div>
-                <div class="metric-value">8.4/10</div>
+            <div class="notification">
+                <strong>Tip:</strong> Start with small goals and build up your daily routine!
             </div>
         </div>
         
         <div id="exercise" class="tab-content hidden">
-            <div class="section-title">Exercise</div>
+            <div class="section-title">Exercise Activities</div>
             
-            <div class="metric">
-                <div class="metric-label">Exercise Minutes</div>
-                <div class="metric-value">12 min</div>
+            <div class="exercise-item">
+                <div class="exercise-name">Quick Walk</div>
+                <div class="exercise-details">Duration: 10-15 min • Steps: 500-1000 • Easy</div>
+                <button class="button" onclick="startExercise('Quick Walk')">Start Walk</button>
             </div>
             
-            <div class="metric">
-                <div class="metric-label">Walking Sessions</div>
-                <div class="metric-value">2 sessions</div>
+            <div class="exercise-item">
+                <div class="exercise-name">Balance Training</div>
+                <div class="exercise-details">Duration: 5-10 min • Focus: Stability • Easy</div>
+                <button class="button" onclick="startExercise('Balance Training')">Start Training</button>
             </div>
             
-            <div class="metric">
-                <div class="metric-label">Calories Burned</div>
-                <div class="metric-value">180 cal</div>
+            <div class="exercise-item">
+                <div class="exercise-name">Park Circuit</div>
+                <div class="exercise-details">Duration: 20-30 min • Steps: 2000+ • Medium</div>
+                <button class="button" onclick="startExercise('Park Circuit')">Start Circuit</button>
             </div>
             
-            <button class="button" onclick="alert('Starting exercise...')">Start Exercise</button>
+            <div class="exercise-item">
+                <div class="exercise-name">Strength Training</div>
+                <div class="exercise-details">Duration: 15-25 min • Focus: Muscle • Medium</div>
+                <button class="button" onclick="startExercise('Strength Training')">Start Training</button>
+            </div>
+        </div>
+        
+        <div id="goals" class="tab-content hidden">
+            <div class="section-title">Achievements & Badges</div>
+            
+            <div class="badge-grid">
+                <!-- Badges will be populated by JavaScript -->
+            </div>
+            
+            <div class="section-title">Daily Goals</div>
+            
+            <div class="metric-card">
+                <div class="metric-header">
+                    <div class="metric-label">Steps Goal</div>
+                    <div class="metric-value" id="steps-goal-display">0 / 5,000</div>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: 0%"></div>
+                </div>
+                <div class="metric-subtitle">Reward: 50 XP</div>
+            </div>
+            
+            <div class="metric-card">
+                <div class="metric-header">
+                    <div class="metric-label">Exercise Goal</div>
+                    <div class="metric-value" id="exercise-goal-display">0 / 20 min</div>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: 0%"></div>
+                </div>
+                <div class="metric-subtitle">Reward: 40 XP</div>
+            </div>
+            
+            <div class="section-title">Weekly Challenges</div>
+            
+            <div class="exercise-item">
+                <div class="exercise-name">Steps Challenge</div>
+                <div class="exercise-details">Complete daily step goal 5 times this week</div>
+                <div class="metric-subtitle">Progress: 0/5 days • Reward: 100 XP</div>
+            </div>
+            
+            <div class="exercise-item">
+                <div class="exercise-name">Exercise Challenge</div>
+                <div class="exercise-details">Complete daily exercise goal 5 times this week</div>
+                <div class="metric-subtitle">Progress: 0/5 days • Reward: 75 XP</div>
+            </div>
+        </div>
+        
+        <div id="progress" class="tab-content hidden">
+            <div class="section-title">Weekly Progress</div>
+            
+            <div class="chart-container">
+                <div class="chart-title">Steps This Week</div>
+                <div class="chart-bar">
+                    <div class="bar" style="height: 10%"></div>
+                    <div class="bar" style="height: 10%"></div>
+                    <div class="bar" style="height: 10%"></div>
+                    <div class="bar" style="height: 10%"></div>
+                    <div class="bar" style="height: 10%"></div>
+                    <div class="bar" style="height: 10%"></div>
+                    <div class="bar" style="height: 10%"></div>
+                </div>
+                <div class="day-labels">
+                    <span>Mon</span>
+                    <span>Tue</span>
+                    <span>Wed</span>
+                    <span>Thu</span>
+                    <span>Fri</span>
+                    <span>Sat</span>
+                    <span>Sun</span>
+                </div>
+            </div>
+            
+            <div class="chart-container">
+                <div class="chart-title">Exercise Minutes This Week</div>
+                <div class="chart-bar">
+                    <div class="bar" style="height: 10%"></div>
+                    <div class="bar" style="height: 10%"></div>
+                    <div class="bar" style="height: 10%"></div>
+                    <div class="bar" style="height: 10%"></div>
+                    <div class="bar" style="height: 10%"></div>
+                    <div class="bar" style="height: 10%"></div>
+                    <div class="bar" style="height: 10%"></div>
+                </div>
+                <div class="day-labels">
+                    <span>Mon</span>
+                    <span>Tue</span>
+                    <span>Wed</span>
+                    <span>Thu</span>
+                    <span>Fri</span>
+                    <span>Sat</span>
+                    <span>Sun</span>
+                </div>
+            </div>
+            
+            <div class="section-title">Stats Summary</div>
+            
+            <div class="metric-card">
+                <div class="metric-header">
+                    <div class="metric-label">Total Points Earned</div>
+                    <div class="metric-value" id="total-points">0</div>
+                </div>
+                <div class="metric-subtitle">Keep going to earn more!</div>
+            </div>
+            
+            <div class="metric-card">
+                <div class="metric-header">
+                    <div class="metric-label">Current Level</div>
+                    <div class="metric-value" id="current-level">1</div>
+                </div>
+                <div class="metric-subtitle">Level up by earning XP!</div>
+            </div>
         </div>
     </div>
     
-    <script>
-        function showTab(tabName) {
-            const contents = document.querySelectorAll('.tab-content');
-            contents.forEach(content => content.classList.add('hidden'));
-            
-            const tabs = document.querySelectorAll('.tab');
-            tabs.forEach(tab => tab.classList.remove('active'));
-            
-            document.getElementById(tabName).classList.remove('hidden');
-            event.target.classList.add('active');
-        }
-    </script>
+    <div class="achievement-popup" id="achievement-popup">
+        <div class="achievement-icon">🏆</div>
+        <div class="achievement-title">Achievement!</div>
+        <div class="achievement-desc" id="achievement-desc">You've made progress!</div>
+        <button class="button" onclick="closeAchievement()">Awesome!</button>
+    </div>
+    
+    <script src="js/app.js"></script>
 </body>
 </html>
         """
