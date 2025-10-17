@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  cac-app:
+    build: .
+    ports:
+      - "8000:8000"   # Basic web app
+      - "8501:8501"   # Streamlit dashboard
+      - "8765:8765"   # WebSocket API
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+      - ./backups:/app/backups
+    environment:
+      - FLASK_ENV=production
+      - PYTHONPATH=/app
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Optional: Add a reverse proxy
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - cac-app
+    restart: unless-stopped
+
+volumes:
+  data:
+  logs:
+  backups:
